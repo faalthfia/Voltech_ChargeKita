@@ -1,96 +1,117 @@
+CREATE DATABASE IF NOT EXISTS pustakauii
+  DEFAULT CHARACTER SET utf8mb4;
+USE pustakauii;
 
-CREATE DATABASE IF NOT EXISTS 01_skema
-  DEFAULT CHARACTER SET utf8mb4
-  COLLATE utf8mb4_unicode_ci;
-USE 01_skema;
-
-CREATE TABLE mitra_lokasi (
-  mitra_id       BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
-  nama_mitra     VARCHAR(120) NOT NULL,
-  jenis_mitra    VARCHAR(40) NULL,
-  kontak_mitra   VARCHAR(30) NULL,
-  email_mitra    VARCHAR(120) NULL,
-  alamat_kantor  TEXT NULL,
-  CONSTRAINT pk_mitra_lokasi PRIMARY KEY (mitra_id)
+CREATE TABLE penerbit (
+  penerbit_id INT NOT NULL AUTO_INCREMENT,
+  nama        VARCHAR(150) NOT NULL,
+  kota        VARCHAR(100) NOT NULL,
+  PRIMARY KEY (penerbit_id)
 ) ENGINE=InnoDB;
 
-CREATE TABLE personel (
-  personel_id    BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
-  nama_personel  VARCHAR(120) NOT NULL,
-  email          VARCHAR(120) NOT NULL,
-  no_telepon     VARCHAR(30) NULL,
-  peran          ENUM('OPERATOR_PUSAT', 'PETUGAS_LOKASI', 'TEKNISI') NOT NULL,
-  status_aktif   BOOLEAN NOT NULL DEFAULT TRUE,
-  CONSTRAINT pk_personel PRIMARY KEY (personel_id),
-  CONSTRAINT uq_personel_email UNIQUE (email),
-  CONSTRAINT chk_personel_status_aktif CHECK (status_aktif IN (0, 1))
+CREATE TABLE kategori (
+  kategori_id   INT NOT NULL AUTO_INCREMENT,
+  nama_kategori VARCHAR(100) NOT NULL,
+  PRIMARY KEY (kategori_id)
 ) ENGINE=InnoDB;
 
-CREATE TABLE stasiun (
-  stasiun_id          BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
-  mitra_id            BIGINT UNSIGNED NOT NULL,
-  nama_stasiun        VARCHAR(120) NOT NULL,
-  jenis_stasiun       ENUM('SPKLU', 'BATTERY_SWAP') NOT NULL,
-  alamat              TEXT NOT NULL,
-  kota                VARCHAR(80) NOT NULL,
-  latitude            DECIMAL(10,7) NULL,
-  longitude           DECIMAL(10,7) NULL,
-  status_operasional  VARCHAR(30) NOT NULL,
-  status_ketersediaan VARCHAR(30) NOT NULL,
-  waktu_update_status DATETIME NULL,
-  CONSTRAINT pk_stasiun PRIMARY KEY (stasiun_id),
-  CONSTRAINT chk_stasiun_latitude
-    CHECK (latitude IS NULL OR latitude BETWEEN -90 AND 90),
-  CONSTRAINT chk_stasiun_longitude
-    CHECK (longitude IS NULL OR longitude BETWEEN -180 AND 180),
-  CONSTRAINT fk_stasiun_mitra
-    FOREIGN KEY (mitra_id) REFERENCES mitra_lokasi(mitra_id)
+CREATE TABLE buku (
+  buku_id           INT NOT NULL AUTO_INCREMENT,
+  isbn              VARCHAR(20) NOT NULL,
+  judul             VARCHAR(150) NOT NULL,
+  tahun_terbit      SMALLINT NOT NULL,
+  jumlah_eksemplar  INT NOT NULL,
+  penerbit_id       INT NOT NULL,
+  kategori_id       INT NOT NULL,
+  PRIMARY KEY (buku_id),
+  CONSTRAINT uq_buku_isbn UNIQUE (isbn),
+  CONSTRAINT chk_buku_jumlah CHECK (jumlah_eksemplar >= 0),
+  CONSTRAINT fk_buku_penerbit
+    FOREIGN KEY (penerbit_id) REFERENCES penerbit(penerbit_id)
+    ON DELETE RESTRICT ON UPDATE CASCADE,
+  CONSTRAINT fk_buku_kategori
+    FOREIGN KEY (kategori_id) REFERENCES kategori(kategori_id)
     ON DELETE RESTRICT ON UPDATE CASCADE
 ) ENGINE=InnoDB;
 
-CREATE TABLE gangguan (
-  gangguan_id          BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
-  stasiun_id           BIGINT UNSIGNED NOT NULL,
-  pelapor_id           BIGINT UNSIGNED NOT NULL,
-  teknisi_id           BIGINT UNSIGNED NULL,
-  judul                VARCHAR(150) NOT NULL,
-  deskripsi            TEXT NOT NULL,
-  prioritas            VARCHAR(20) NOT NULL,
-  status_penanganan    VARCHAR(30) NOT NULL,
-  waktu_lapor          DATETIME NOT NULL,
-  waktu_mulai_tangani  DATETIME NULL,
-  waktu_selesai        DATETIME NULL,
-  CONSTRAINT pk_gangguan PRIMARY KEY (gangguan_id),
-  CONSTRAINT chk_gangguan_mulai_setelah_lapor
-    CHECK (waktu_mulai_tangani IS NULL OR waktu_mulai_tangani >= waktu_lapor),
-  CONSTRAINT chk_gangguan_selesai_setelah_mulai
-    CHECK (
-      waktu_selesai IS NULL
-      OR (waktu_mulai_tangani IS NOT NULL AND waktu_selesai >= waktu_mulai_tangani)
-    ),
-  CONSTRAINT fk_gangguan_stasiun
-    FOREIGN KEY (stasiun_id) REFERENCES stasiun(stasiun_id)
+CREATE TABLE pengarang (
+  pengarang_id INT NOT NULL AUTO_INCREMENT,
+  nama         VARCHAR(150) NOT NULL,
+  PRIMARY KEY (pengarang_id)
+) ENGINE=InnoDB;
+
+CREATE TABLE buku_pengarang (
+  buku_id      INT NOT NULL,
+  pengarang_id INT NOT NULL,
+  PRIMARY KEY (buku_id, pengarang_id),
+  CONSTRAINT fk_buku_pengarang_buku
+    FOREIGN KEY (buku_id) REFERENCES buku(buku_id)
     ON DELETE RESTRICT ON UPDATE CASCADE,
-  CONSTRAINT fk_gangguan_pelapor
-    FOREIGN KEY (pelapor_id) REFERENCES personel(personel_id)
-    ON DELETE RESTRICT ON UPDATE CASCADE,
-  CONSTRAINT fk_gangguan_teknisi
-    FOREIGN KEY (teknisi_id) REFERENCES personel(personel_id)
+  CONSTRAINT fk_buku_pengarang_pengarang
+    FOREIGN KEY (pengarang_id) REFERENCES pengarang(pengarang_id)
     ON DELETE RESTRICT ON UPDATE CASCADE
 ) ENGINE=InnoDB;
 
-CREATE TABLE riwayat_aktivitas (
-  aktivitas_id      BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
-  personel_id       BIGINT UNSIGNED NOT NULL,
-  stasiun_id        BIGINT UNSIGNED NULL,
-  jenis_aktivitas   VARCHAR(60) NOT NULL,
-  detail_aktivitas  TEXT NULL,
-  waktu_aktivitas   DATETIME NOT NULL,
-  CONSTRAINT pk_riwayat_aktivitas PRIMARY KEY (aktivitas_id),
-  CONSTRAINT fk_aktivitas_personel
-    FOREIGN KEY (personel_id) REFERENCES personel(personel_id)
+CREATE TABLE anggota (
+  anggota_id    INT NOT NULL AUTO_INCREMENT,
+  nim           VARCHAR(20) NOT NULL,
+  nama          VARCHAR(150) NOT NULL,
+  email         VARCHAR(254) NOT NULL,
+  tanggal_daftar DATE NOT NULL,
+  jalan         VARCHAR(255) NULL,
+  kota          VARCHAR(100) NULL,
+  PRIMARY KEY (anggota_id),
+  CONSTRAINT uq_anggota_nim UNIQUE (nim),
+  CONSTRAINT uq_anggota_email UNIQUE (email)
+) ENGINE=InnoDB;
+
+CREATE TABLE anggota_telepon (
+  anggota_id INT NOT NULL,
+  telepon    VARCHAR(20) NOT NULL,
+  PRIMARY KEY (anggota_id, telepon),
+  CONSTRAINT fk_anggota_telepon_anggota
+    FOREIGN KEY (anggota_id) REFERENCES anggota(anggota_id)
+    ON DELETE RESTRICT ON UPDATE CASCADE
+) ENGINE=InnoDB;
+
+CREATE TABLE kartu (
+  kartu_id       INT NOT NULL AUTO_INCREMENT,
+  nomor_kartu    VARCHAR(30) NOT NULL,
+  tanggal_terbit DATE NOT NULL,
+  masa_berlaku   DATE NOT NULL,
+  anggota_id     INT NOT NULL,
+  PRIMARY KEY (kartu_id),
+  CONSTRAINT uq_kartu_nomor UNIQUE (nomor_kartu),
+  CONSTRAINT uq_kartu_anggota UNIQUE (anggota_id),
+  CONSTRAINT fk_kartu_anggota
+    FOREIGN KEY (anggota_id) REFERENCES anggota(anggota_id)
+    ON DELETE RESTRICT ON UPDATE CASCADE
+) ENGINE=InnoDB;
+
+CREATE TABLE peminjaman (
+  peminjaman_id        INT NOT NULL AUTO_INCREMENT,
+  tanggal_pinjam       DATE NOT NULL,
+  tanggal_jatuh_tempo  DATE NOT NULL,
+  anggota_id           INT NOT NULL,
+  PRIMARY KEY (peminjaman_id),
+  CONSTRAINT chk_peminjaman_jatuh_tempo
+    CHECK (tanggal_jatuh_tempo >= tanggal_pinjam),
+  CONSTRAINT fk_peminjaman_anggota
+    FOREIGN KEY (anggota_id) REFERENCES anggota(anggota_id)
+    ON DELETE RESTRICT ON UPDATE CASCADE
+) ENGINE=InnoDB;
+
+CREATE TABLE detail_peminjaman (
+  peminjaman_id  INT NOT NULL,
+  buku_id        INT NOT NULL,
+  tanggal_kembali DATE NULL,
+  denda          DECIMAL(10,2) NOT NULL DEFAULT 0,
+  PRIMARY KEY (peminjaman_id, buku_id),
+  CONSTRAINT chk_detail_peminjaman_denda CHECK (denda >= 0),
+  CONSTRAINT fk_detail_peminjaman
+    FOREIGN KEY (peminjaman_id) REFERENCES peminjaman(peminjaman_id)
     ON DELETE RESTRICT ON UPDATE CASCADE,
-  CONSTRAINT fk_aktivitas_stasiun
-    FOREIGN KEY (stasiun_id) REFERENCES stasiun(stasiun_id)
+  CONSTRAINT fk_detail_buku
+    FOREIGN KEY (buku_id) REFERENCES buku(buku_id)
     ON DELETE RESTRICT ON UPDATE CASCADE
 ) ENGINE=InnoDB;
