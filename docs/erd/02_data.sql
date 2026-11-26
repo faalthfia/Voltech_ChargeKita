@@ -1,12 +1,6 @@
--- 02_data.sql
--- Data contoh untuk proyek ChargeKita.
--- Jalankan setelah 01_skema.sql berhasil dibuat.
--- Pilih database ChargeKita terlebih dahulu di phpMyAdmin karena file skema
--- yang diberikan belum berisi perintah CREATE DATABASE atau USE.
 
 START TRANSACTION;
 
--- 1. Data mitra lokasi (6 baris)
 INSERT INTO mitra_lokasi
   (mitra_id, nama_mitra, jenis_mitra, kontak_mitra, email_mitra, alamat_kantor)
 VALUES
@@ -17,7 +11,6 @@ VALUES
   (5, 'ChargeHub Indonesia', 'Swasta', '+62-31-5550105', 'support@chargehub.test', 'Jl. Pemuda No. 12, Surabaya'),
   (6, 'Energi Mandiri Depok', NULL, NULL, NULL, NULL);
 
--- 2. Data stasiun (8 baris). Stasiun 8 sengaja belum memiliki laporan gangguan.
 INSERT INTO stasiun
   (stasiun_id, mitra_id, nama_stasiun, jenis_stasiun, alamat, kota,
    latitude, longitude, status_operasional, status_ketersediaan, waktu_update_status)
@@ -31,7 +24,6 @@ VALUES
   (7, 5, 'SPKLU Gubeng', 'SPKLU', 'Jl. Raya Gubeng No. 30', 'Surabaya', -7.2720000, 112.7510000, 'BEROPERASI', 'TERSEDIA', '2026-11-25 08:25:00'),
   (8, 6, 'Battery Swap Margonda', 'BATTERY_SWAP', 'Jl. Margonda Raya No. 100', 'Depok', NULL, NULL, 'BEROPERASI', 'TERSEDIA', NULL);
 
--- 3. Data personel (8 baris)
 INSERT INTO personel
   (personel_id, nama_personel, email, no_telepon, peran, status_aktif)
 VALUES
@@ -44,7 +36,6 @@ VALUES
   (7, 'Dewi Anggraini', 'dewi@chargekita.test', '+62-811-1000-0007', 'TEKNISI', TRUE),
   (8, 'Bagus Setiawan', 'bagus@chargekita.test', NULL, 'PETUGAS_LOKASI', FALSE);
 
--- 4. Data gangguan (10 baris). Beberapa gangguan belum memiliki teknisi.
 INSERT INTO gangguan
   (gangguan_id, stasiun_id, pelapor_id, teknisi_id, judul, deskripsi,
    prioritas, status_penanganan, waktu_lapor, waktu_mulai_tangani, waktu_selesai)
@@ -60,7 +51,6 @@ VALUES
   (9, 6, 2, 6, 'Display status tidak akurat', 'Status ketersediaan pada layar terlambat diperbarui.', 'RENDAH', 'SELESAI', '2026-11-21 10:00:00', '2026-11-21 10:20:00', '2026-11-21 11:00:00'),
   (10, 7, 3, 7, 'Pembacaan arus tidak stabil', 'Hasil pembacaan arus berubah-ubah saat dilakukan pengujian.', 'SEDANG', 'SELESAI', '2026-11-22 12:30:00', '2026-11-22 13:00:00', '2026-11-22 14:00:00');
 
--- 5. Data riwayat aktivitas (12 baris)
 INSERT INTO riwayat_aktivitas
   (aktivitas_id, personel_id, stasiun_id, jenis_aktivitas, detail_aktivitas, waktu_aktivitas)
 VALUES
@@ -79,7 +69,6 @@ VALUES
 
 COMMIT;
 
--- Pemeriksaan jumlah data setelah INSERT
 SELECT 'mitra_lokasi' AS nama_tabel, COUNT(*) AS jumlah_baris FROM mitra_lokasi
 UNION ALL
 SELECT 'stasiun', COUNT(*) FROM stasiun
